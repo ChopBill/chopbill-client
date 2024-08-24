@@ -1,77 +1,48 @@
-import { View, Text, TouchableOpacity } from "react-native";
-import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { Feather, FontAwesome6 } from "@expo/vector-icons";
+import { View, Text, TouchableOpacity, Pressable } from "react-native";
+import React, { useEffect } from "react";
+import { TabIcons } from "@/app/constants/TabIcons";
+import Animated, {
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 
-export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
-  const icons = {
-    home: (props: any) => (
-      <Feather name="home" size={24} color={"#222"} className="self-center" {...props} />
-    ),
-    bills: (props: any) => (
-      <FontAwesome6
-        name="money-bill-1"
-        className="self-center"
-        size={24}
-        color={"#222"}
-        {...props}
-      />
-    ),
-    profile: (props: any) => (
-      <Feather name="user" className="self-center" size={24} color={"#222"} {...props} />
-    ),
-  };
-  return (
-    <View className="absolute bottom-10 left-0 right-0">
-      <View className="flex-row justify-between items-center bg-white w-[200px] self-center rounded-full py-2 px-6">
-        {state.routes.map((route, index) => {
-          const { options } = descriptors[route.key];
-          const label =
-            options.tabBarLabel !== undefined
-              ? options.tabBarLabel
-              : options.title !== undefined
-              ? options.title
-              : route.name;
-
-          const isFocused = state.index === index;
-
-          const onPress = () => {
-            const event = navigation.emit({
-              type: "tabPress",
-              target: route.key,
-              canPreventDefault: true,
-            });
-
-            if (!isFocused && !event.defaultPrevented) {
-              navigation.navigate(route.name, route.params);
-            }
-          };
-
-          const onLongPress = () => {
-            navigation.emit({
-              type: "tabLongPress",
-              target: route.key,
-            });
-          };
-
-          return (
-            <TouchableOpacity
-              key={route.name}
-              accessibilityRole="button"
-              accessibilityState={isFocused ? { selected: true } : {}}
-              accessibilityLabel={options.tabBarAccessibilityLabel}
-              testID={options.tabBarTestID}
-              onPress={onPress}
-              onLongPress={onLongPress}
-              className="flex-1 gap-5"
-            >
-              {icons[route.name as keyof typeof icons]({
-                color: isFocused ? "#673ab7" : "#222",
-              })}
-              <Text style={{ color: isFocused ? "#673ab7" : "#222" }}>{label as string}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    </View>
-  );
+interface TabBarButtonProps {
+  onPress: () => void;
+  onLongPress: () => void;
+  isFocused: boolean;
+  routeName: string;
+  label: string;
 }
+
+const TabBarButton = ({ onPress, onLongPress, isFocused, routeName, label }: TabBarButtonProps) => {
+  const scale = useSharedValue(0);
+
+  useEffect(() => {
+    scale.value = withSpring(typeof isFocused === "boolean" ? (isFocused ? 1 : 0) : isFocused, {
+      duration: 300,
+    });
+  }, [scale, isFocused]);
+
+  const animatedTextStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(scale.value, [0, 1], [1, 0]);
+    return {
+      opacity,
+    };
+  });
+  return (
+    <Pressable onPress={onPress} onLongPress={onLongPress}>
+      {TabIcons[routeName as keyof typeof TabIcons]({
+        color: isFocused ? "#673ab7" : "#222",
+      })}
+      <Animated.Text
+        style={[{ color: isFocused ? "#673ab7" : "#222", fontSize: 12 }, animatedTextStyle]}
+      >
+        {label as string}
+      </Animated.Text>
+    </Pressable>
+  );
+};
+
+export default TabBarButton;

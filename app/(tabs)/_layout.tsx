@@ -1,7 +1,7 @@
 import { View, Text } from "react-native";
 import React from "react";
 import { Tabs } from "expo-router";
-import { TabBar } from "@/app/components/navigation/TabBarButton";
+import { TabBar } from "@/app/components/navigation/TabBar";
 
 const TabLayout = () => {
   return (
